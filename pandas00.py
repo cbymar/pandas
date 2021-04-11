@@ -1,6 +1,10 @@
 import datetime as dt
+import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
+from pandas_datareader import data as dr
+
 
 ##############
 # Point of this script is a reference for a lot of the ordinary manipulations
@@ -198,7 +202,7 @@ jb.sort_index(inplace=True)
 "Tuxedo" in jb.index
 # use second label to correspond to second dimension.
 
-jb.loc["Moonraker", "Actor" : "Box_Office"]
+jb.loc["Moonraker", "Actor": "Box_Office"]
 
 #### .iloc reflects whatever index is in place.
 # iloc can take a tuple, I think.
@@ -206,10 +210,10 @@ jb.loc["Moonraker", "Actor" : "Box_Office"]
 #### both loc and iloc can be used to identify values that get overwritten
 jb
 #### renaming values
-mapper = {"Skyfall":"bschool",
-          "Casino Royale":"gradschool",
-          "Die Another Day":"college",
-          "Tomorrow Never Dies":"highschool"}
+mapper = {"Skyfall": "bschool",
+          "Casino Royale": "gradschool",
+          "Die Another Day": "college",
+          "Tomorrow Never Dies": "highschool"}
 
 jb.rename(mapper=mapper, axis=0)  # renaming  based on index
 # can do same with columns.
@@ -235,20 +239,22 @@ jb.query("Budget > 50").sort_values(by="Year")
 jb.query("Actor not in ['Sean Connery', 'Timothy Dalton']")
 jb.query("Actor in ['Sean Connery', 'Timothy Dalton']")
 
+
 #### Apply function
 def string_money(numeric):
     return str(numeric) + " pounds sterling!"
+
 
 jb["Box_Office"] = jb["Box_Office"].apply(string_money)
 colhere = ["Box_Office", "Budget", "Bond_Actor_Salary"]
 
 #### Can also use applymap after using series selection to pull out column names
-colhere = list(jb.dtypes[jb.dtypes=="float64"].keys())
+colhere = list(jb.dtypes[jb.dtypes == "float64"].keys())
 jb[colhere] = jb[colhere].applymap(string_money, na_action='ignore')
 
 #### String methods
 chi = pd.read_csv("./ignoreland/chicago.csv")
-chi.iloc[:,1:].head()
+chi.iloc[:, 1:].head()
 chi.info()
 chi[["Position Title", "Department"]] = chi[["Position Title", "Department"]].apply(lambda x: x.astype("category"))
 
@@ -263,29 +269,28 @@ chi["Name"].str.split(",").str.get(0)  # get the element by position.
 chi["Name"].str.split(",").str.get(1).str.strip().str.split(" ").str.get(0).value_counts(ascending=False).head()
 
 #### expand and n params for str.split()
-chi[["title1","titlerest"]] = chi["Position Title"].str.split(" ", expand=True, n=1)
+chi[["title1", "titlerest"]] = chi["Position Title"].str.split(" ", expand=True, n=1)
 # expand takes it across multiple columns
 "Hi the point is to take from the right".str.rpartition(" ", )[-1]
 chi["Position Title"].str.rpartition(" ", expand=True).get(2)
 
 #### Get the index values level
-bigmac = pd.read_csv("./ignoreland/bigmac.csv", parse_dates=["Date"], index_col = ["Date","Country"])
+bigmac = pd.read_csv("./ignoreland/bigmac.csv", parse_dates=["Date"], index_col=["Date", "Country"])
 bigmac.info()
 aa = bigmac.index.get_level_values("Date")  # get the values (not necessarily distinct)
 len(aa)
 aa.nunique()  # index is not a set.
 ## Sort by the index (typical op):
 bigmac.sort_index(inplace=True)
-bigmac.index.set_names(names="Day",level=0,inplace=True)
+bigmac.index.set_names(names="Day", level=0, inplace=True)
 bigmac.index
 
 #### Sort on multiindex.  Default is to sort outer to inner
-bigmac.sort_index(ascending=[True,False], inplace=True)
+bigmac.sort_index(ascending=[True, False], inplace=True)
 bigmac
 
 #### Sort stably:
 bigmac.sort_index(level=0, ascending=False, inplace=True)  # only sort on that level of the index
-
 
 #### Risk: using .loc['',''], the second argument could be index value or column label.
 # avoid this bug using a tuple to encapsulate all row-indexing information
@@ -300,13 +305,13 @@ bigmac = bigmac.transpose()  # no inplace param
 sales = pd.read_csv("./ignoreland/salesmen.csv", parse_dates=["Date"])
 sales["Salesman"] = sales["Salesman"].astype("category")
 ## index is what's in the rows; columns obviously are columns; values -- is there a default aggregate function?
-sales.pivot(index = "Date", columns = "Salesman", values = "Revenue")
+sales.pivot(index="Date", columns="Salesman", values="Revenue")
 
 # count unique combinations of two columns.  Use set_index, not group_by().
 # https://stackoverflow.com/questions/35268817/unique-combinations-of-values-in-selected-columns-in-pandas-data-frame-and-count
-sales.groupby(["Date","Salesman"]).size()
-sales.set_index(["Date","Salesman"]).index.size  # scalar with the length of the index
-sales.set_index(["Date","Salesman"]).index.nunique()  # scalar with length of the deduplicated index
+sales.groupby(["Date", "Salesman"]).size()
+sales.set_index(["Date", "Salesman"]).index.size  # scalar with the length of the index
+sales.set_index(["Date", "Salesman"]).index.nunique()  # scalar with length of the deduplicated index
 sales["Salesman"].nunique() * sales["Date"].nunique()
 
 #### pivot_table()
@@ -315,9 +320,9 @@ foods.info()
 aa = foods.pivot_table(values="Spend", index="Gender", aggfunc="sum")
 type(aa)  # it returns a data frame
 aa.info()
-aa = foods.pivot_table(values="Spend", index=["Gender","Item"], aggfunc="sum")
+aa = foods.pivot_table(values="Spend", index=["Gender", "Item"], aggfunc="sum")
 # Factor it out by city
-aa = foods.pivot_table(values="Spend", index=["Gender","Item"], columns=["City"], aggfunc="sum", fill_value=0)
+aa = foods.pivot_table(values="Spend", index=["Gender", "Item"], columns=["City"], aggfunc="sum", fill_value=0)
 aa
 
 #### Melting
@@ -339,14 +344,14 @@ aa = sectors.sum()  # restricts to the columns that are amenable to that functio
 sectors.get_group("Apparel")["Revenue"].sum()  # get (only one) specific group
 sectors["Revenue"].sum()  # look just at a single column and apply a function
 
-sector_indust = ft.groupby(["Sector","Industry"])
+sector_indust = ft.groupby(["Sector", "Industry"])
 aa = sector_indust["Revenue"].mean()
 aa.index.size
 type(aa.index[0])  # series of tuples.
 type(aa.index)  # type is multiindex.
 
 #### Using agg:
-sector_indust.agg({"Revenue":["sum","mean"]})
+sector_indust.agg({"Revenue": ["sum", "mean"]})
 
 #### Iterating through groupby to build out a summary dataframe
 ft = pd.read_csv("./ignoreland/fortune1000.csv", index_col="Rank")
@@ -365,8 +370,8 @@ for city, data in cities:
     df = df.append(highest_rev_by_city)
 
 #### Joining/concatenating
-week1  = pd.read_csv("./ignoreland/Restaurant - Week 1 Sales.csv")
-week2  = pd.read_csv("./ignoreland/Restaurant - Week 2 Sales.csv")
+week1 = pd.read_csv("./ignoreland/Restaurant - Week 1 Sales.csv")
+week2 = pd.read_csv("./ignoreland/Restaurant - Week 2 Sales.csv")
 customers = pd.read_csv("./ignoreland/Restaurant - Customers.csv")
 foods = pd.read_csv("./ignoreland/Restaurant - Foods.csv")
 
@@ -392,28 +397,28 @@ joinkey = "Customer ID"  # we can pass this as a variable
 week1.sort_values(by=joinkey, inplace=True)
 week2.sort_values(by=joinkey, inplace=True)
 len(week1), len(week2)
-aa = week1.merge(week2, how="inner", left_on=joinkey, right_on=joinkey, suffixes=["_left","_right"],
+aa = week1.merge(week2, how="inner", left_on=joinkey, right_on=joinkey, suffixes=["_left", "_right"],
                  sort=True, indicator=True)
 len(aa)
 
 #### Inner join (compound key)
-joinkey = ["Customer ID","Food ID"]  # we can pass this as a variable
-aa = week1.merge(week2, how="inner", left_on=joinkey, right_on=joinkey, suffixes=["_left","_right"])
+joinkey = ["Customer ID", "Food ID"]  # we can pass this as a variable
+aa = week1.merge(week2, how="inner", left_on=joinkey, right_on=joinkey, suffixes=["_left", "_right"])
 
 #### Outer join
 joinkey = "Customer ID"  # we can pass this as a variable
-aa = week1.merge(week2, how="outer", left_on=joinkey, right_on=joinkey, suffixes=["_left","_right"],
+aa = week1.merge(week2, how="outer", left_on=joinkey, right_on=joinkey, suffixes=["_left", "_right"],
                  indicator=True, sort=True)
 aa.shape
 # use aa["_merge"].value_counts() to summarize the provenance of each row
 aa["_merge"].value_counts()
 ## and we can remove the intersection by
-mask_aa_xor = aa["_merge"].isin(["left_only","right_only"])  #this only creates a mask
+mask_aa_xor = aa["_merge"].isin(["left_only", "right_only"])  # this only creates a mask
 aa_xor = aa[mask_aa_xor]
 
 #### Leftjoin
 joinkey = "Food ID"  # we can pass this as a variable
-aa = week1.merge(foods, how="left", left_on=joinkey, right_on=joinkey, suffixes=["_left","_right"],
+aa = week1.merge(foods, how="left", left_on=joinkey, right_on=joinkey, suffixes=["_left", "_right"],
                  sort=True)
 len(foods)
 len(week1)
@@ -422,15 +427,15 @@ aa.index.size
 aa.index.nunique()
 # use .drop(right_on, axis=1) after confirming the join worked.
 
-bb = week2.merge(customers, how="left", left_on="Customer ID", right_on="ID", suffixes=["_left","_right"],
+bb = week2.merge(customers, how="left", left_on="Customer ID", right_on="ID", suffixes=["_left", "_right"],
                  sort=True, indicator=True)
 
 #### use indexes so that we do not need to drop the column:
 customers = pd.read_csv("./ignoreland/Restaurant - Customers.csv")
-cc = week1.merge(customers, how="left", left_on="Customer ID", right_on="ID", suffixes=["_left","_right"],
+cc = week1.merge(customers, how="left", left_on="Customer ID", right_on="ID", suffixes=["_left", "_right"],
                  sort=True, indicator=True).drop("ID", axis=1)
 customers = pd.read_csv("./ignoreland/Restaurant - Customers.csv", index_col="ID")
-dd = week1.merge(customers, how="left", left_on="Customer ID", right_index=True, suffixes=["_left","_right"],
+dd = week1.merge(customers, how="left", left_on="Customer ID", right_index=True, suffixes=["_left", "_right"],
                  sort=True, indicator=True, )
 cc.equals(dd)  # false at first
 dd.reset_index(drop=True, inplace=True)  # it becomes equivalent only after we reindex
@@ -440,6 +445,176 @@ cc.equals(dd)  # true now.
 week1 = pd.read_csv("./ignoreland/Restaurant - Week 1 Sales.csv")
 satisf = pd.read_csv("./ignoreland/Restaurant - Week 1 Satisfaction.csv")
 len(satisf)
-joined = week1.join(satisf)   # fast.
+joined = week1.join(satisf)  # fast.
+
+#### Dates and times
+someday = dt.date(2021, 3, 14)
+someday.month, type(someday.month)  # it's an integer
+sometime = dt.datetime(2021, 3, 14, 13, 1, 34)
+sometime
+str(sometime)
+sometime.second
+
+#### vs pandas datetime
+pd.Timestamp("2020-01-15")  # adds the zeroed out times.
+pd.Timestamp(someday)  # takes a date
+pd.Timestamp(sometime)  # takes a date
+
+#### DateTimeIndex object
+dates = ["2020-02-15", "2021-01-15", "2021-03-11"]
+dtIndex = pd.DatetimeIndex(dates)
+values = [100, 200, 400]
+pd.Series(data=values, index=dtIndex)
+
+pd.to_datetime([1567619210, 1437619211, 1565619210, 1569619210], unit='s')
+datesh = pd.date_range(start="2020-02-15", end="2020-08-13")  # default freq is "D"
+type(datesh)  # DatetimeIndex
+pd.date_range(start="2020-02-15", end="2020-08-13", freq='2D')  # default freq is "D"
+pd.date_range(start="2020-02-15", end="2020-08-13", freq='M')  # gives end of month
+# as opposed to freq="MS", which is month start.  freq="A" is year end.
+aa.memory_usage()
+#### Date range creation
+datelisth = pd.date_range(end="2001-08-01", periods=360, freq="W")
+datelisth
+
+#### use .dt accessor
+bunchofdates = pd.date_range(start="2001-03-04", end="2010-03-03", freq="24D")
+s = pd.Series(bunchofdates)
+s.dt.day_name()
+
+#### using pandas datareader
+msft = dr.DataReader(name="MSFT", data_source="yahoo",
+                     start="2010-01-01",
+                     end="2020-01-01")
+
+msft.truncate(before="2015-03-04", after="2018-03-03")
+# use dateoffset to step one [period] at a time from the starting offset
+birthdays = pd.date_range(start="2001-03-04", end="2022-01-01",
+                          freq=pd.DateOffset(years=1))
+
+birthdays2 = pd.date_range(start="2001-03-04", end="2022-01-01",
+                          freq="Y")
+
+#### Insert a column
+msft.index.day_name()  # get the day of the week.  ie, attribute of date, ie attribute of index.
+msft.insert(0, "dayofweek", msft.index.day_name())
+
+# then we can filter based on the attribute of the date
+len(msft[msft["dayofweek"]=="Monday"])
+msft.groupby("dayofweek").size()
+
+dt.date.weekday(pd.to_datetime("2021-04-11"))
+pd.to_datetime("2021-04-11").day_name()
+
+#### pd.DateOffset for adding steps forward
+msft = dr.DataReader(name="MSFT", data_source="yahoo",
+                     start="2010-01-01",
+                     end="2020-01-01")
+msft.index
+msfplus10 = msft.index + pd.DateOffset(days=10)
+msfplus10
+
+#### add dynamic datetime, eg, rounding:
+msft.index + pd.tseries.offsets.MonthEnd()  #
+# Note that end of month for last day is end of next month.
+# rounds to next end month.  Same
+msft.index + pd.tseries.offsets.MonthBegin()  # next beginning.
+# so Jan 4 goes to Feb 1.
+
+#### Timedelta object.
+time_a = pd.Timestamp("2021-02-02 01:03:02")
+time_b = pd.Timestamp("2021-04-02 04:01:05")
+
+aa = time_a - time_b
+bb = pd.Timedelta("-60 days 21:01:57")
+aa == bb
+
+#### timedelta in a dataset
+shipping = pd.read_csv("./ignoreland/ecommerce.csv",
+                       index_col="ID",
+                       parse_dates=["order_date","delivery_date"])
+
+newcol = shipping["delivery_date"] - shipping["order_date"]
+shipping["delivery_lag"] = newcol
+
+mask = shipping["delivery_lag"] > "100 days"
+shipping[mask]
+shipping["delivery_lag"].max()
+
+###################################################
+#### input and output
+url = "https://data.cityofnewyork.us/api/views/25th-nujf/rows.csv"
+bn = pd.read_csv(url)
+bn.info()
+bn.columns = ["yob","gender","ethnicity","fname","count","rank"]
+
+bn[["gender","ethnicity"]] = bn[["gender","ethnicity"]].apply(lambda x: x.astype("category"))
+bn["fname"].tolist()
+
+#### Join, titlecase, dedupe, sort
+", ".join(bn["fname"].str.title().drop_duplicates().sort_values())
+
+#### write out to csv
+bn.to_csv("./ignoreland/nycbn.csv",
+          columns=["yob", "gender", "fname"],
+          index=False,
+          encoding="UTF-8")
+
+#### read excel:
+# note that sheets=none results in a dict of dataframes.
+
+#### Write excel:
+# list what's in the directory
+os.listdir(os.path.join(os.curdir,'ignoreland'))
+os.getcwd() # full path of working directory
+outputpath = os.path.join(os.getcwd(), "ignoreland")
+outputfile = os.path.join(outputpath, "babynames.xlsx")
+
+excelfile = pd.ExcelWriter(outputfile)
+
+femalenames = bn[bn["gender"].str.lower() == "female"]
+malenames = bn[~bn.index.isin(femalenames.index)]
+len(bn) - len(femalenames), len(malenames)
+femalenames.to_excel(excelfile, sheet_name = "female_names", index=False)
+malenames.to_excel(excelfile, sheet_name = "male_names", index=False)
+# Still hasn't executed yet
+excelfile.save()
 
 
+#### Visualization
+bb = dr.DataReader(name = "BB", data_source = "yahoo",
+                   start="2007-01-01",
+                   end="2020-12-31")
+
+bb.head()
+plt.style.available
+
+#### Pandas options
+pd.describe_option("max_columns")
+pd.get_option("max_columns")
+pd.set_option("precision",3)
+# and we can use
+pd.set_option("max_columns", 6)
+type(pd.options.display)
+
+print(pd.options)
+pd.options.__dict__  # lists them all out
+pd.options.d.keys()
+
+#### To traverse the keys of a nested dict:
+# https://stackoverflow.com/questions/10756427/loop-through-all-nested-dictionary-values?noredirect=1&lq=1
+def recursive_items(dictionary):
+    for key, value, depth in dictionary.items():
+        if type(value) is dict:
+            depth += 1
+            yield from recursive_items(value)   # this invokes the function within the dict.
+        else:
+            yield (key, value)   # return as a tuple
+
+
+for key, value in recursive_items(pd.options.d):
+    print(key, value)
+
+a = {'a': {1: {1: 2, 3: 4}, 2: {5: 6}}}
+for key, value in recursive_items(a):
+    print(key, value)
